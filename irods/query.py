@@ -33,6 +33,7 @@ class Query(object):
         self.sess = sess
         self.columns = OrderedDict()
         self.criteria = []
+        self.case_sensitive = kwargs.pop('case_sensitive', True)
         self._limit = -1
         self._offset = 0
         self._continue_index = 0
@@ -52,6 +53,7 @@ class Query(object):
         new_q = Query(self.sess)
         new_q.columns = self.columns
         new_q.criteria = self.criteria
+        new_q.case_sensitive = self.case_sensitive
         new_q._limit = self._limit
         new_q._offset = self._offset
         new_q._continue_index = self._continue_index
@@ -65,7 +67,16 @@ class Query(object):
 
     def filter(self, *criteria):
         new_q = self._clone()
-        new_q.criteria += list(criteria)
+
+        if self.case_sensitive:
+            new_q.criteria += list(criteria)
+        else:
+            for criterion in criteria:
+                if type(criterion.unprocessed_value) == str:
+                    criterion.unprocessed_value = str.upper(
+                        criterion.unprocessed_value)
+                new_q.criteria.append(criterion)
+
         return new_q
 
     def order_by(self, column, order='asc'):
@@ -155,7 +166,7 @@ class Query(object):
             'maxRows': max_rows,
             'continueInx': self._continue_index,
             'partialStartIndex': self._offset,
-            'options': 0,
+            'options': 0 if self.case_sensitive else query_number['UPPER_CASE_WHERE'],
             'KeyValPair_PI': self._kw_message(),
             'InxIvalPair_PI': self._select_message(),
             'InxValPair_PI': self._conds_message()

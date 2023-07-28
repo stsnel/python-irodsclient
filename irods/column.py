@@ -39,6 +39,15 @@ class Criterion(object):
     def value(self):
         return self.query_key.column_type.to_irods(self._value)
 
+    @property
+    def unprocessed_value(self):
+        return self._value
+
+    @unprocessed_value.setter
+    def unprocessed_value(self, new_value):
+        self._value = new_value
+
+
 class In(Criterion):
 
     def __init__(self, query_key, value):
