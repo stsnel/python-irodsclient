@@ -71,10 +71,22 @@ class Query(object):
         if self.case_sensitive:
             new_q.criteria += list(criteria)
         else:
+            # In case-insensitive mode, all criterion values are converted
+            # to uppercase here, and the UPPER_CASE_WHERE option is enabled
+            # when creating a new GenQueryRequest in the _message function.
+            # Converting both keys and values to uppercase results in
+            # case-insensitive queries.
             for criterion in criteria:
-                if type(criterion.unprocessed_value) == str:
-                    criterion.unprocessed_value = str.upper(
-                        criterion.unprocessed_value)
+                if type(criterion.raw_value) == str:
+                    criterion.raw_value = str.upper(
+                        criterion.raw_value)
+                elif type(criterion.raw_value) == list:
+                    criterion.raw_value = [str.upper(c) if type(c) == str
+                                           else c for c in criterion.raw_value]
+                elif type(criterion.raw_value) == tuple:
+                    criterion.raw_value = tuple(
+                        [str.upper(c) if type(c) == str else c for c in
+                         list(criterion.raw_value)])
                 new_q.criteria.append(criterion)
 
         return new_q

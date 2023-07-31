@@ -40,11 +40,12 @@ class Criterion(object):
         return self.query_key.column_type.to_irods(self._value)
 
     @property
-    def unprocessed_value(self):
+    def raw_value(self):
+        """Returns the value, without transforming it."""
         return self._value
 
-    @unprocessed_value.setter
-    def unprocessed_value(self, new_value):
+    @raw_value.setter
+    def raw_value(self, new_value):
         self._value = new_value
 
 
