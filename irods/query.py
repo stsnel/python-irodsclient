@@ -77,16 +77,16 @@ class Query(object):
             # Converting both keys and values to uppercase results in
             # case-insensitive queries.
             for criterion in criteria:
-                if type(criterion.raw_value) == str:
-                    criterion.raw_value = str.upper(
-                        criterion.raw_value)
-                elif type(criterion.raw_value) == list:
-                    criterion.raw_value = [str.upper(c) if type(c) == str
-                                           else c for c in criterion.raw_value]
-                elif type(criterion.raw_value) == tuple:
-                    criterion.raw_value = tuple(
+                if type(criterion.value) == str:
+                    criterion.value = str.upper(
+                        criterion.value)
+                elif type(criterion.value) == list:
+                    criterion.value = [str.upper(c) if type(c) == str
+                                           else c for c in criterion.value]
+                elif type(criterion.value) == tuple:
+                    criterion.value = tuple(
                         [str.upper(c) if type(c) == str else c for c in
-                         list(criterion.raw_value)])
+                         list(criterion.value)])
                 new_q.criteria.append(criterion)
 
         return new_q
@@ -155,7 +155,7 @@ class Query(object):
     # lists
     def _conds_message(self):
         dct = _OrderedMultiMapping([
-            (criterion.query_key.icat_id, criterion.op + ' ' + criterion.value)
+            (criterion.query_key.icat_id, criterion.op + ' ' + criterion.irods_value)
             for criterion in self.criteria
             if isinstance(criterion.query_key, Column)
         ])
@@ -164,7 +164,7 @@ class Query(object):
     def _kw_message(self):
         dct = dict([
             (criterion.query_key.icat_key,
-             criterion.op + ' ' + criterion.value)
+             criterion.op + ' ' + criterion.irods_value)
             for criterion in self.criteria
             if isinstance(criterion.query_key, Keyword)
         ])

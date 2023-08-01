@@ -33,20 +33,11 @@ class Criterion(object):
     def __init__(self, op, query_key, value):
         self.op = op
         self.query_key = query_key
-        self._value = value
+        self.value = value
 
     @property
-    def value(self):
-        return self.query_key.column_type.to_irods(self._value)
-
-    @property
-    def raw_value(self):
-        """Returns the value, without transforming it."""
-        return self._value
-
-    @raw_value.setter
-    def raw_value(self, new_value):
-        self._value = new_value
+    def irods_value(self):
+        return self.query_key.column_type.to_irods(self.value)
 
 
 class In(Criterion):
@@ -55,10 +46,10 @@ class In(Criterion):
         super(In, self).__init__('in', query_key, value)
 
     @property
-    def value(self):
+    def irods_value(self):
         v = "("
         comma = ""
-        for element in self._value:
+        for element in self.value:
             v += "{}'{}'".format(comma,element)
             comma = ","
         v += ")"
@@ -82,8 +73,8 @@ class Between(Criterion):
         super(Between, self).__init__('between', query_key, value)
 
     @property
-    def value(self):
-        lower_bound, upper_bound = self._value
+    def irods_value(self):
+        lower_bound, upper_bound = self.value
         return "{} {}".format(self.query_key.column_type.to_irods(lower_bound),
                               self.query_key.column_type.to_irods(upper_bound))
 
