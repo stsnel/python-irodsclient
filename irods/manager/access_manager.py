@@ -22,6 +22,9 @@ import warnings
 
 logger = logging.getLogger(__name__)
 
+class InvalidAtomicACLRequest(Exception):
+    pass
+
 
 def users_by_ids(session, ids=()):
     try:
@@ -191,3 +194,53 @@ class AccessManager(Manager):
             conn.send(request)
             response = conn.recv()
         logger.debug(response.int_info)
+
+    def set_multiple_atomically(self, acls, admin=False, **kw):
+        ## Todo elsewhere docs / example
+        ## Todo elsewhere tests
+
+        self._verify_atomic_acl_parameters(acls)
+
+        operations = [
+                { "acl" : acl.access_name,
+                  "zone" : acl.user_zone,
+                  "entity_name" : acl.user }
+                for acl in acls ]
+
+        request = {
+            "admin_mode": admin,
+            "logical_path": list({ acl.path for acl in acls })[0],
+            "operations": operations
+        }
+
+        self._call_atomic_acl_api(request)
+
+
+    def _verify_atomic_acl_parameters(self, acls):
+        if not isinstance(acls, list):
+            raise InvalidAtomicACLRequest(
+                "Atomic ACL requests must get a list of iRODSAccess objects as a parameter.")
+
+        if not all(isinstance(acl, iRODSAccess) for acl in acls):
+            raise InvalidAtomicACLRequest(
+                "Atomic ACL requests can only process iRODSAccess objects.")
+
+        objects = { acl.path for acl in acls }
+        if len(objects) > 1:
+            raise InvalidAtomicACLRequest("Atomic ACL requests must refer to only one object.")
+        elif len(objects) == 0:
+            raise InvalidAtomicACLRequest("Atomic ACL request received without any iRODSAccess objects.")
+
+
+    def _call_atomic_acl_api(self, request_text):
+        with self.sess.pool.get_connection() as conn:
+            request_msg = iRODSMessage(
+                "RODS_API_REQ",
+                JSON_Message(request_text, conn.server_version),
+                int_info=api_number["ATOMIC_APPLY_ACL_OPERATIONS_APN"],
+            )
+            conn.send(request_msg)
+            response = conn.recv()
+
+        response_msg = response.get_json_encoded_struct()
+        logger.debug("in atomic_acl_api, server responded with: %r", response_msg)
